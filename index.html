@@ -325,7 +325,8 @@ async function loadLogs(){
     if(new Date(row.created_at) < new Date(s.at)) s.at = row.created_at;
     const sorted = (row.sets||[]).slice().sort((a,b)=>a.set_number-b.set_number);
     const exName = allExercises[row.exercise_id]?.name || "(removed exercise)";
-    s.items.push({ name: exName, note: row.note, sets: sorted });
+    const exOrder = allExercises[row.exercise_id]?.sort_order ?? 999;
+    s.items.push({ name: exName, note: row.note, sets: sorted, _order: exOrder });
     if(!lastLog[row.exercise_id]) lastLog[row.exercise_id] = { note: row.note, sets: sorted };
   });
   history = [...sessions.entries()]
@@ -333,7 +334,7 @@ async function loadLogs(){
     .map(([sid, s]) => ({
       dayLabel: days.find(d=>d.id===s.day_id)?.label || "Workout",
       date: new Date(s.at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}),
-      items: s.items
+      items: s.items.slice().sort((a,b) => a._order - b._order)
     }));
   setStatus(history.length ? history.length + " session" + (history.length>1?"s":"") + " logged"
     : "First session. Log your sets and they'll show as targets next time.");
