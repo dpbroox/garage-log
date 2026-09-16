@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#DCD9D2">
+<title>Garage Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --concrete:#DCD9D2; --concrete-deep:#C9C5BC; --ink:#1B1D1E; --ink-soft:#5C5F60;
+  --steel:#2F4858; --oxide:#1F5F8B; --done:#3D6B4A; --paper:#EFEDE8; --warn:#8A4B26; --note:#6B4F9E;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--concrete);color:var(--ink);font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.45;padding-bottom:70px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+.hidden{display:none!important}
+textarea{font-family:inherit}
+
+header{padding:22px 0 14px;border-bottom:2px solid var(--ink)}
+.brandrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:34px;margin:0;line-height:1}
+.datestamp{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:500;color:var(--ink-soft);white-space:nowrap}
+.rule{margin-top:10px;font-size:12.5px;color:var(--ink-soft)}
+
+/* sign in */
+.gate{padding:34px 0 10px;max-width:340px}
+.gate h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:600;margin:0 0 4px}
+.gate p{font-size:13.5px;color:var(--ink-soft);margin:0 0 18px;line-height:1.5}
+.gate label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--ink-soft);margin:0 0 4px}
+.gate input{width:100%;font-size:16px;padding:11px 12px;margin-bottom:13px;background:#fff;color:var(--ink);
+  border:1.5px solid var(--concrete-deep);border-bottom:2.5px solid var(--steel);border-radius:2px 2px 0 0}
+.gate input:focus{outline:none;border-bottom-color:var(--oxide)}
+.gate .row{display:flex;gap:9px;align-items:center}
+.btn{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:600;padding:11px 22px;
+  border:0;border-radius:3px;background:var(--ink);color:var(--paper);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--steel);border:1.5px solid var(--concrete-deep)}
+.btn.small{font-size:15px;padding:7px 13px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+.msg{font-size:13px;margin-top:12px;line-height:1.45;min-height:18px}
+.msg.err{color:var(--warn)}
+
+/* main tabs */
+.maintabs{display:flex;gap:0;margin:16px 0 0;border-bottom:2px solid var(--ink)}
+.maintabs button{
+  font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:600;
+  padding:9px 4px 8px;margin-right:22px;background:transparent;border:0;
+  color:var(--ink-soft);cursor:pointer;border-bottom:3px solid transparent;
+}
+.maintabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.maintabs button:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+
+/* day sub-tabs */
+nav.daynav{display:flex;margin:14px 0 4px;border:2px solid var(--ink);border-radius:2px;overflow:hidden}
+nav.daynav button{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;padding:10px 4px 8px;
+  background:transparent;color:var(--ink);border:0;border-right:2px solid var(--ink);cursor:pointer}
+nav.daynav button:last-child{border-right:0}
+nav.daynav button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+nav.daynav button:focus-visible{outline:3px solid var(--oxide);outline-offset:-3px}
+
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:16px 0 2px}
+.dayfocus{font-family:'Barlow Condensed',sans-serif;font-size:23px;font-weight:600;margin:0}
+.progress{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:600;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+
+/* exercise card */
+.ex{background:var(--paper);border:1.5px solid var(--concrete-deep);border-left:5px solid var(--steel);
+  border-radius:3px;padding:13px 14px 14px;margin:11px 0;transition:border-left-color .15s ease,opacity .15s ease}
+.ex.done{border-left-color:var(--done);opacity:.82}
+.ex.done .exname{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--ink-soft)}
+.extop{display:flex;gap:12px;align-items:flex-start}
+.check{flex:0 0 auto;width:30px;height:30px;margin-top:1px;border:2px solid var(--ink);border-radius:3px;
+  background:transparent;cursor:pointer;display:grid;place-items:center;padding:0}
+.check:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+.check svg{width:17px;height:17px;opacity:0;transform:scale(.6);transition:opacity .14s ease,transform .14s cubic-bezier(.3,1.5,.5,1)}
+.ex.done .check{background:var(--done);border-color:var(--done)}
+.ex.done .check svg{opacity:1;transform:scale(1)}
+.exbody{flex:1;min-width:0}
+.exname{font-weight:600;font-size:15.5px;line-height:1.3;margin:0}
+.target{font-family:'Barlow Condensed',sans-serif;font-size:16px;color:var(--steel);margin-top:1px;font-variant-numeric:tabular-nums}
+.cue{font-size:12.5px;color:var(--ink-soft);margin-top:5px;line-height:1.4}
+
+.sets{margin-top:12px;border-top:1px solid var(--concrete-deep);padding-top:9px}
+.colhead{display:flex;gap:8px;align-items:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;
+  font-weight:600;color:var(--ink-soft);margin-bottom:5px}
+.colhead .cnum{flex:0 0 30px}
+.colhead .cf{flex:1 1 0;min-width:0}
+.colhead .cdel{flex:0 0 30px}
+.setrow{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.setnum{flex:0 0 30px;height:36px;display:grid;place-items:center;font-family:'Barlow Condensed',sans-serif;
+  font-size:19px;font-weight:600;color:var(--paper);background:var(--steel);border-radius:2px;font-variant-numeric:tabular-nums}
+.setrow input{flex:1 1 0;min-width:0;width:100%;height:36px;font-family:'Barlow Condensed',sans-serif;
+  font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;text-align:center;padding:0 6px;
+  border:1.5px solid var(--concrete-deep);border-bottom:2.5px solid var(--steel);border-radius:2px 2px 0 0;background:#fff;color:var(--ink)}
+.setrow input::placeholder{color:#B6B2AA;font-weight:500}
+.setrow input:focus{outline:none;border-bottom-color:var(--oxide);box-shadow:0 2px 0 -1px var(--oxide)}
+.delset{flex:0 0 30px;height:36px;background:transparent;border:1.5px solid var(--concrete-deep);
+  border-radius:2px;color:var(--ink-soft);font-size:19px;line-height:1;cursor:pointer;padding:0}
+.delset:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+.delset[disabled]{opacity:.3;cursor:default}
+.addset{width:100%;margin-top:3px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;
+  padding:8px;background:transparent;color:var(--steel);border:1.5px dashed var(--concrete-deep);border-radius:2px;cursor:pointer}
+.addset:hover{border-color:var(--steel)}
+.addset:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+
+/* notes */
+.lastnote{font-size:12px;color:var(--note);margin-top:9px;padding:6px 9px;background:#fff;border-left:3px solid var(--note);
+  border-radius:0 2px 2px 0;line-height:1.4}
+.lastnote b{font-family:'Barlow Condensed',sans-serif;font-size:12.5px;letter-spacing:.02em}
+.notewrap{margin-top:9px}
+.notewrap label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:3px}
+.notewrap textarea{width:100%;min-height:38px;font-size:13.5px;padding:7px 9px;border:1.5px solid var(--concrete-deep);
+  border-bottom:2.5px solid var(--note);border-radius:2px 2px 0 0;background:#fff;color:var(--ink);resize:vertical}
+.notewrap textarea:focus{outline:none}
+.notewrap textarea::placeholder{color:#B6B2AA}
+
+.savebar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);
+  padding:11px 16px calc(11px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:20}
+.savebar .status{flex:1;color:#B9B5AC;font-size:12.5px;line-height:1.35}
+.savebar button{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:600;padding:10px 20px;
+  border:0;border-radius:3px;background:var(--paper);color:var(--ink);cursor:pointer}
+.savebar button:disabled{opacity:.45;cursor:default}
+.savebar button:focus-visible{outline:3px solid var(--oxide);outline-offset:2px}
+
+/* history */
+.histcard{background:var(--paper);border:1.5px solid var(--concrete-deep);border-radius:3px;padding:14px 15px;margin:13px 0}
+.histhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.histhead b{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:600}
+.histhead span{font-size:12.5px;color:var(--ink-soft)}
+.histitem{padding:8px 0;border-top:1px solid var(--concrete-deep)}
+.histitem:first-child{border-top:0;padding-top:0}
+.histitem .hn{font-weight:600;font-size:14.5px}
+.histitem .hs{font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--steel);margin-top:2px;font-variant-numeric:tabular-nums}
+.histitem .hnote{font-size:12.5px;color:var(--note);margin-top:4px;font-style:italic}
+.empty{color:var(--ink-soft);font-size:13.5px;padding:8px 0}
+
+/* manage */
+.mgrday{background:var(--paper);border:1.5px solid var(--concrete-deep);border-radius:3px;padding:14px 15px;margin:13px 0}
+.mgrday.arch{opacity:.55}
+.mgrhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mgrhead b{font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:600}
+.mgrex{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--concrete-deep)}
+.mgrex .mn{flex:1;min-width:0}
+.mgrex .mn .nm{font-weight:600;font-size:14.5px}
+.mgrex .mn .tg{font-size:12px;color:var(--ink-soft)}
+.mgrbtns{display:flex;gap:5px;flex:0 0 auto}
+.iconbtn{width:28px;height:28px;border:1.5px solid var(--concrete-deep);border-radius:2px;background:#fff;
+  color:var(--ink-soft);font-size:15px;line-height:1;cursor:pointer;padding:0}
+.iconbtn:focus-visible{outline:3px solid var(--oxide);outline-offset:1px}
+.editform{border-top:1px solid var(--concrete-deep);padding-top:10px;margin-top:8px}
+.editform .frow{display:flex;gap:8px;margin-bottom:8px}
+.editform label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:600;color:var(--ink-soft);margin-bottom:3px}
+.editform input,.editform textarea{width:100%;font-size:14px;padding:7px 9px;border:1.5px solid var(--concrete-deep);
+  border-bottom:2.5px solid var(--steel);border-radius:2px 2px 0 0;background:#fff;color:var(--ink)}
+.checkrow{display:flex;gap:14px;align-items:center;margin-bottom:8px;font-size:13.5px}
+.checkrow label{display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-weight:500;color:var(--ink);margin:0}
+.addbox{margin-top:11px;padding-top:11px;border-top:1.5px dashed var(--concrete-deep)}
+.addbox summary{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;color:var(--steel);cursor:pointer;list-style:none}
+.addbox summary::-webkit-details-marker{display:none}
+.addbox summary::before{content:'+ ';font-weight:700}
+.addbox[open] summary::before{content:'\2013 '}
+.footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 0;font-size:12px;color:var(--ink-soft)}
+.linkbtn{background:none;border:0;color:var(--steel);font-size:12.5px;text-decoration:underline;cursor:pointer;padding:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow"><h1>Garage Log</h1><div class="datestamp" id="stamp"></div></div>
+    <div class="rule">Neutral spine, ribs stacked. No rounding, no arching. Stop anything that reproduces your pain.</div>
+  </header>
+
+  <section class="gate" id="gate">
+    <h2>Sign in</h2>
+    <p id="gateBlurb">Your log syncs to your account, so it's on every device you use.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" inputmode="email">
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <div class="row">
+      <button class="btn" id="goSignIn">Sign in</button>
+      <button class="btn ghost" id="goSignUp">Create account</button>
+    </div>
+    <div class="msg" id="gateMsg"></div>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="maintabs" id="maintabs">
+      <button data-v="workout" class="on">Workout</button>
+      <button data-v="history">History</button>
+      <button data-v="manage">Manage</button>
+    </div>
+
+    <div id="view-workout">
+      <nav class="daynav" id="daynav"></nav>
+      <div class="dayhead"><h2 class="dayfocus" id="dayfocus"></h2><div class="progress" id="progress"></div></div>
+      <div id="list"></div>
+    </div>
+
+    <div id="view-history" class="hidden">
+      <div id="hist"></div>
+    </div>
+
+    <div id="view-manage" class="hidden">
+      <div id="mgr"></div>
+      <details class="addbox" id="addDayBox">
+        <summary>Add a day</summary>
+        <div class="editform">
+          <div class="frow"><div style="flex:1"><label>Label</label><input id="nd-label" placeholder="Day D"></div></div>
+          <div class="frow"><div style="flex:1"><label>Focus line</label><input id="nd-focus" placeholder="e.g. Posterior chain"></div></div>
+          <button class="btn small" id="nd-save">Add day</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="footer"><span id="whoami"></span><button class="linkbtn" id="signout">Sign out</button></div>
+  </section>
+</div>
+
+<div class="savebar hidden" id="savebar">
+  <div class="status" id="status">Loading&hellip;</div>
+  <button id="save" disabled>Finish</button>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const sb = createClient("https://lcvnjjbwpivixbxnxbbz.supabase.co", "sb_publishable_eABvXttjioVPZSUK6pIb6Q_njkymXT9");
+
+const $ = id => document.getElementById(id);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LABEL = {weight:"Weight", reps:"Reps", time:"Seconds"};
+const UNIT  = {weight:"lb", reps:"reps", time:"s"};
+const COL   = {weight:"weight", reps:"reps", time:"seconds"};
+
+let user = null, view = "workout", currentDayId = null;
+let days = [], exercisesByDay = {}, allExercises = {};
+let entries = {}, setCount = {}, doneSet = {}, noteDraft = {};
+let history = [], lastLog = {};
+
+$("stamp").textContent = new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+
+/* ---------------- auth ---------------- */
+function gateMsg(t, err){ $("gateMsg").textContent = t||""; $("gateMsg").className = "msg"+(err?" err":""); }
+$("goSignIn").onclick = async () => {
+  const email=$("email").value.trim(), pw=$("pw").value;
+  if(!email||!pw){ gateMsg("Enter your email and password.",true); return; }
+  gateMsg("Signing in\u2026");
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pw});
+  if(error){ gateMsg(error.message,true); return; }
+  enter(data.user);
+};
+$("goSignUp").onclick = async () => {
+  const email=$("email").value.trim(), pw=$("pw").value;
+  if(!email||pw.length<6){ gateMsg("Enter an email and a password of at least 6 characters.",true); return; }
+  gateMsg("Creating your account\u2026");
+  const {data,error} = await sb.auth.signUp({email,password:pw});
+  if(error){ gateMsg(error.message,true); return; }
+  if(data.session) enter(data.user); else gateMsg("Check your email for a confirmation link, then sign in.",false);
+};
+$("pw").addEventListener("keydown", e => { if(e.key==="Enter") $("goSignIn").click(); });
+$("signout").onclick = async () => {
+  await sb.auth.signOut();
+  user=null; days=[]; exercisesByDay={}; history=[]; lastLog={}; entries={}; setCount={}; doneSet={}; noteDraft={};
+  $("app").classList.add("hidden"); $("savebar").classList.add("hidden"); $("gate").classList.remove("hidden");
+  gateMsg("Signed out.");
+};
+async function enter(u){
+  user = u;
+  $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+  $("whoami").textContent = "Signed in as " + u.email;
+  await loadStructure();
+  await loadLogs();
+  switchView("workout");
+}
+
+/* ---------------- main tabs ---------------- */
+$("maintabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if(!b) return;
+  switchView(b.dataset.v);
+});
+function switchView(v){
+  view = v;
+  $("maintabs").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v===v));
+  $("view-workout").classList.toggle("hidden", v!=="workout");
+  $("view-history").classList.toggle("hidden", v!=="history");
+  $("view-manage").classList.toggle("hidden", v!=="manage");
+  $("savebar").classList.toggle("hidden", v!=="workout");
+  if(v==="workout") renderWorkout();
+  if(v==="history") renderHistory();
+  if(v==="manage") renderManage();
+}
+
+/* ---------------- data load ---------------- */
+async function loadStructure(){
+  const [{data:d},{data:ex}] = await Promise.all([
+    sb.from("days").select("*").order("sort_order"),
+    sb.from("exercises").select("*").order("sort_order")
+  ]);
+  days = d||[];
+  allExercises = {};
+  exercisesByDay = {};
+  (ex||[]).forEach(x => { allExercises[x.id]=x; (exercisesByDay[x.day_id] ||= []).push(x); });
+  Object.values(exercisesByDay).forEach(list => list.sort((a,b)=>a.sort_order-b.sort_order));
+  const active = days.filter(dd=>!dd.archived);
+  if(!currentDayId || !active.find(dd=>dd.id===currentDayId)) currentDayId = active[0]?.id || null;
+}
+
+async function loadLogs(){
+  setStatus("Syncing\u2026");
+  const { data, error } = await sb.from("exercise_logs")
+    .select("id,session_id,day_id,exercise_id,note,created_at,sets(set_number,weight,reps,seconds)")
+    .order("created_at", { ascending:false }).limit(1500);
+  if(error){ setStatus("Working offline. Your last synced numbers are shown."); return; }
+
+  lastLog = {};
+  const sessions = new Map();
+  (data||[]).forEach(row => {
+    if(!sessions.has(row.session_id)) sessions.set(row.session_id, { day_id: row.day_id, at: row.created_at, items: [] });
+    const s = sessions.get(row.session_id);
+    if(new Date(row.created_at) < new Date(s.at)) s.at = row.created_at;
+    const sorted = (row.sets||[]).slice().sort((a,b)=>a.set_number-b.set_number);
+    const exName = allExercises[row.exercise_id]?.name || "(removed exercise)";
+    s.items.push({ name: exName, note: row.note, sets: sorted });
+    if(!lastLog[row.exercise_id]) lastLog[row.exercise_id] = { note: row.note, sets: sorted };
+  });
+  history = [...sessions.entries()]
+    .sort((a,b) => new Date(b[1].at) - new Date(a[1].at))
+    .map(([sid, s]) => ({
+      dayLabel: days.find(d=>d.id===s.day_id)?.label || "Workout",
+      date: new Date(s.at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}),
+      items: s.items
+    }));
+  setStatus(history.length ? history.length + " session" + (history.length>1?"s":"") + " logged"
+    : "First session. Log your sets and they'll show as targets next time.");
+}
+
+function setStatus(t){ $("status").textContent = t; }
+
+/* ---------------- workout tab ---------------- */
+function setsFor(exId){
+  if(setCount[exId]==null) setCount[exId] = allExercises[exId].default_sets;
+  return setCount[exId];
+}
+function renderDayNav(){
+  const active = days.filter(d=>!d.archived);
+  $("daynav").innerHTML = active.map(d =>
+    '<button role="tab" aria-selected="'+(d.id===currentDayId)+'" data-id="'+d.id+'">'+esc(d.label)+'</button>').join("");
+  $("daynav").querySelectorAll("button").forEach(b => b.onclick = () => { currentDayId=b.dataset.id; renderWorkout(); });
+}
+function lastLine(exId, fields){
+  const prev = lastLog[exId]?.sets;
+  if(!prev || !prev.length) return "";
+  const map = {weight:'weight',reps:'reps',time:'seconds'};
+  return "Last time: " + prev.map(s => fields.map(f => {
+    const v = s[map[f]];
+    return v!=null ? v+(f==="weight"?"lb":f==="time"?"s":"") : "\u2013";
+  }).join("\u00d7")).join("  \u00b7  ");
+}
+function renderWorkout(){
+  renderDayNav();
+  const list = exercisesByDay[currentDayId] || [];
+  const dayObj = days.find(d=>d.id===currentDayId);
+  $("dayfocus").textContent = dayObj ? (dayObj.focus || dayObj.label) : "No days yet \u2014 add one in Manage";
+  $("list").innerHTML = list.map(e => {
+    const done = doneSet[e.id];
+    const n = setsFor(e.id);
+    const prev = lastLog[e.id]?.sets || [];
+    const map = {weight:'weight',reps:'reps',time:'seconds'};
+    const head = '<div class="colhead"><div class="cnum">Set</div>' +
+      e.fields.map(f=>'<div class="cf">'+LABEL[f]+'</div>').join("") + '<div class="cdel"></div></div>';
+    let rows="";
+    for(let s=0;s<n;s++){
+      const inputs = e.fields.map(f => {
+        const k = e.id+"|"+s+"|"+f;
+        const ph = prev[s] && prev[s][map[f]]!=null ? prev[s][map[f]] : "\u2013";
+        const v = entries[k]!=null ? entries[k] : "";
+        return '<input data-k="'+k+'" type="number" inputmode="numeric" aria-label="Set '+(s+1)+' '+LABEL[f]+
+          '" placeholder="'+ph+'" value="'+v+'">';
+      }).join("");
+      rows += '<div class="setrow"><div class="setnum">'+(s+1)+'</div>'+inputs+
+        '<button class="delset" data-ex="'+e.id+'" '+(n<=1?"disabled":"")+'>\u00d7</button></div>';
+    }
+    const last = lastLine(e.id, e.fields);
+    const lastNote = lastLog[e.id]?.note;
+    return '<div class="ex '+(done?"done":"")+'"><div class="extop">'+
+      '<button class="check" data-ex="'+e.id+'" aria-pressed="'+!!done+'" aria-label="Mark '+esc(e.name)+' complete">'+
+      '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#EFEDE8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+      '<div class="exbody"><p class="exname">'+esc(e.name)+'</p><div class="target">'+esc(e.target||"")+
+      '</div><div class="cue">'+esc(e.cue||"")+'</div></div></div>'+
+      '<div class="sets">'+head+rows+'<button class="addset" data-ex="'+e.id+'">+ Add set</button>'+
+      (last?'<div class="lastline" style="font-size:11.5px;color:var(--ink-soft);margin-top:7px">'+last+'</div>':'')+
+      (lastNote?'<div class="lastnote"><b>Last note:</b> '+esc(lastNote)+'</div>':'')+
+      '<div class="notewrap"><label>Note for next time</label>'+
+      '<textarea data-note="'+e.id+'" placeholder="e.g. too easy, up the weight next time">'+esc(noteDraft[e.id]||"")+'</textarea></div>'+
+      '</div></div>';
+  }).join("");
+
+  $("list").querySelectorAll(".check").forEach(b => b.onclick = () => { doneSet[b.dataset.ex]=!doneSet[b.dataset.ex]; renderWorkout(); });
+  $("list").querySelectorAll(".addset").forEach(b => b.onclick = () => { setCount[b.dataset.ex]=setsFor(b.dataset.ex)+1; renderWorkout(); });
+  $("list").querySelectorAll(".delset").forEach(b => b.onclick = () => {
+    const exId=b.dataset.ex, n=setsFor(exId); if(n<=1) return;
+    allExercises[exId].fields.forEach(f => delete entries[exId+"|"+(n-1)+"|"+f]);
+    setCount[exId]=n-1; renderWorkout();
+  });
+  $("list").querySelectorAll(".setrow input").forEach(inp => inp.oninput = () => {
+    const v=inp.value.trim(); if(v==="") delete entries[inp.dataset.k]; else entries[inp.dataset.k]=Number(v);
+    updateProgress();
+  });
+  $("list").querySelectorAll("textarea[data-note]").forEach(t => t.oninput = () => { noteDraft[t.dataset.note]=t.value; });
+  updateProgress();
+}
+function updateProgress(){
+  const list = exercisesByDay[currentDayId] || [];
+  const done = list.filter(e => doneSet[e.id]).length;
+  $("progress").textContent = done+" of "+list.length;
+  $("save").disabled = done===0;
+  $("save").textContent = (done===list.length && list.length>0) ? "Finish "+(days.find(d=>d.id===currentDayId)?.label||"Day") : "Save "+done+" done";
+}
+
+/* ---------------- save ---------------- */
+const QUEUE = "garagelog:pending_v2";
+function queueGet(){ try{ return JSON.parse(localStorage.getItem(QUEUE)||"[]"); }catch(e){ return []; } }
+function queueSet(v){ try{ localStorage.setItem(QUEUE, JSON.stringify(v)); }catch(e){} }
+
+async function persistSession(payload){
+  const logRows = payload.items.map(it => ({
+    user_id: user.id, session_id: payload.session_id, day_id: payload.day_id,
+    exercise_id: it.exercise_id, note: it.note
+  }));
+  const { data: insertedLogs, error: e1 } = await sb.from("exercise_logs").insert(logRows).select("id,exercise_id");
+  if(e1) return false;
+  const byEx = {}; insertedLogs.forEach(l => byEx[l.exercise_id] = l.id);
+  const setRows = [];
+  payload.items.forEach(it => it.sets.forEach(s => setRows.push({
+    exercise_log_id: byEx[it.exercise_id], set_number: s.set_number,
+    weight: s.weight ?? null, reps: s.reps ?? null, seconds: s.seconds ?? null
+  })));
+  if(setRows.length){ const { error: e2 } = await sb.from("sets").insert(setRows); if(e2) return false; }
+  return true;
+}
+async function flushQueue(){
+  const pending = queueGet(); if(!pending.length) return;
+  const remaining = [];
+  for(const payload of pending){ if(!(await persistSession(payload))) remaining.push(payload); }
+  queueSet(remaining);
+  if(remaining.length < pending.length) setStatus((pending.length-remaining.length)+" offline session(s) synced.");
+}
+
+$("save").onclick = async () => {
+  const list = exercisesByDay[currentDayId] || [];
+  const session_id = crypto.randomUUID();
+  const items = [];
+  list.forEach(e => {
+    if(!doneSet[e.id]) return;
+    const n = setsFor(e.id);
+    const sets = [];
+    for(let s=0;s<n;s++){
+      const row = { set_number:s+1, weight:null, reps:null, seconds:null };
+      let any=false;
+      e.fields.forEach(f => { const v=entries[e.id+"|"+s+"|"+f]; if(v!=null){ row[COL[f]]=v; any=true; } });
+      if(any) sets.push(row);
+    }
+    items.push({ exercise_id:e.id, note: (noteDraft[e.id]||"").trim() || null, sets });
+  });
+  if(!items.length){ setStatus("Nothing to save \u2014 check off an exercise and enter at least one set."); return; }
+
+  $("save").disabled = true; setStatus("Saving\u2026");
+  const payload = { session_id, day_id: currentDayId, items };
+  const ok = await persistSession(payload);
+  if(!ok){ queueSet(queueGet().concat([payload])); setStatus("Saved on this device. It'll sync next time you're online."); }
+  else setStatus("Saved and synced.");
+
+  list.forEach(e => { delete doneSet[e.id]; delete noteDraft[e.id]; delete setCount[e.id];
+    for(let s=0;s<20;s++) e.fields.forEach(f => delete entries[e.id+"|"+s+"|"+f]); });
+  await loadLogs();
+  renderWorkout();
+};
+
+/* ---------------- history tab ---------------- */
+function renderHistory(){
+  $("hist").innerHTML = history.length ? history.map(h =>
+    '<div class="histcard"><div class="histhead"><b>'+esc(h.dayLabel)+'</b><span>'+esc(h.date)+'</span></div>'+
+    h.items.map(it => {
+      const setTxt = it.sets.map(s => {
+        const parts=[]; if(s.weight!=null) parts.push(s.weight+"lb"); if(s.reps!=null) parts.push(s.reps+"reps");
+        if(s.seconds!=null) parts.push(s.seconds+"s"); return parts.join(" \u00d7 ");
+      }).filter(Boolean).join(",  ");
+      return '<div class="histitem"><div class="hn">'+esc(it.name)+'</div>'+
+        (setTxt?'<div class="hs">'+esc(setTxt)+'</div>':'')+
+        (it.note?'<div class="hnote">\u201c'+esc(it.note)+'\u201d</div>':'')+'</div>';
+    }).join("") + '</div>'
+  ).join("") : '<div class="empty">Nothing logged yet. Finish a workout and it\'ll show up here.</div>';
+}
+
+/* ---------------- manage tab ---------------- */
+function renderManage(){
+  const html = days.map(d => {
+    const list = (exercisesByDay[d.id]||[]);
+    const exHtml = list.map((e,idx) => {
+      const flds = ['weight','reps','time'].map(f =>
+        '<label><input type="checkbox" class="fchk" value="'+f+'" '+(e.fields.includes(f)?"checked":"")+'> '+LABEL[f]+'</label>').join("");
+      return '<div class="mgrex-wrap" data-ex="'+e.id+'">'+
+        '<div class="mgrex"><div class="mn"><div class="nm">'+esc(e.name)+(e.archived?' <span style="color:var(--warn)">(retired)</span>':'')+
+        '</div><div class="tg">'+esc(e.target||"")+'</div></div>'+
+        '<div class="mgrbtns">'+
+        (idx>0?'<button class="iconbtn mv" data-dir="-1" title="Move up">\u2191</button>':'')+
+        (idx<list.length-1?'<button class="iconbtn mv" data-dir="1" title="Move down">\u2193</button>':'')+
+        '<button class="iconbtn edit" title="Edit">\u270e</button>'+
+        '<button class="iconbtn arch" title="'+(e.archived?"Restore":"Retire")+'">'+(e.archived?'\u21bb':'\u2715')+'</button>'+
+        '</div></div>'+
+        '<div class="editform hidden" data-editform>'+
+        '<div class="frow"><div style="flex:1"><label>Name</label><input class="f-name" value="'+esc(e.name)+'"></div></div>'+
+        '<div class="frow"><div style="flex:1"><label>Target (sets \u00d7 reps text)</label><input class="f-target" value="'+esc(e.target||"")+'"></div></div>'+
+        '<div class="frow"><div style="flex:1"><label>Cue</label><input class="f-cue" value="'+esc(e.cue||"")+'"></div></div>'+
+        '<div class="frow"><div style="flex:1"><label>Default sets</label><input class="f-sets" type="number" value="'+e.default_sets+'"></div></div>'+
+        '<div class="checkrow">'+flds+'</div>'+
+        '<button class="btn small save-edit">Save</button>'+
+        '</div></div>';
+    }).join("");
+    return '<div class="mgrday '+(d.archived?"arch":"")+'" data-day="'+d.id+'">'+
+      '<div class="mgrhead"><b>'+esc(d.label)+'</b><div class="mgrbtns">'+
+      '<button class="iconbtn dayarch" title="'+(d.archived?"Restore day":"Retire day")+'">'+(d.archived?'\u21bb':'\u2715')+'</button>'+
+      '</div></div>'+
+      exHtml+
+      '<details class="addbox"><summary>Add an exercise</summary><div class="editform">'+
+      '<div class="frow"><div style="flex:1"><label>Name</label><input class="ne-name" placeholder="Exercise name"></div></div>'+
+      '<div class="frow"><div style="flex:1"><label>Target</label><input class="ne-target" placeholder="2\u20133 \u00d7 5\u20138"></div></div>'+
+      '<div class="frow"><div style="flex:1"><label>Cue</label><input class="ne-cue" placeholder="Form cue"></div></div>'+
+      '<div class="frow"><div style="flex:1"><label>Default sets</label><input class="ne-sets" type="number" value="3"></div></div>'+
+      '<div class="checkrow">'+
+      '<label><input type="checkbox" class="ne-f" value="weight" checked> Weight</label>'+
+      '<label><input type="checkbox" class="ne-f" value="reps" checked> Reps</label>'+
+      '<label><input type="checkbox" class="ne-f" value="time"> Time</label></div>'+
+      '<button class="btn small ne-save">Add exercise</button></div></details>'+
+      '</div>';
+  }).join("");
+  $("mgr").innerHTML = html || '<div class="empty">No days yet. Add one below.</div>';
+
+  $("mgr").querySelectorAll(".mgrday").forEach(dayEl => {
+    const dayId = dayEl.dataset.day;
+    dayEl.querySelector(".dayarch").onclick = async () => {
+      const d = days.find(x=>x.id===dayId);
+      await sb.from("days").update({archived: !d.archived}).eq("id", dayId);
+      await loadStructure(); renderManage();
+    };
+    dayEl.querySelectorAll(".mgrex-wrap").forEach(exEl => {
+      const exId = exEl.dataset.ex;
+      const form = exEl.querySelector("[data-editform]");
+      exEl.querySelector(".edit").onclick = () => form.classList.toggle("hidden");
+      exEl.querySelector(".arch").onclick = async () => {
+        const e = allExercises[exId];
+        await sb.from("exercises").update({archived: !e.archived}).eq("id", exId);
+        await loadStructure(); renderManage();
+      };
+      const mv = exEl.querySelector(".mv");
+      if(mv) mv.onclick = async () => {
+        const list = exercisesByDay[dayId];
+        const i = list.findIndex(x=>x.id===exId);
+        const j = i + Number(mv.dataset.dir);
+        if(j<0 || j>=list.length) return;
+        const a=list[i], b=list[j];
+        await Promise.all([
+          sb.from("exercises").update({sort_order:b.sort_order}).eq("id",a.id),
+          sb.from("exercises").update({sort_order:a.sort_order}).eq("id",b.id)
+        ]);
+        await loadStructure(); renderManage();
+      };
+      exEl.querySelector(".save-edit").onclick = async () => {
+        const fields = [...form.querySelectorAll(".fchk:checked")].map(c=>c.value);
+        await sb.from("exercises").update({
+          name: form.querySelector(".f-name").value.trim(),
+          target: form.querySelector(".f-target").value.trim(),
+          cue: form.querySelector(".f-cue").value.trim(),
+          default_sets: Number(form.querySelector(".f-sets").value)||3,
+          fields: fields.length?fields:['reps']
+        }).eq("id", exId);
+        await loadStructure(); await loadLogs(); renderManage();
+      };
+    });
+    dayEl.querySelector(".ne-save").onclick = async () => {
+      const name = dayEl.querySelector(".ne-name").value.trim();
+      if(!name) return;
+      const fields = [...dayEl.querySelectorAll(".ne-f:checked")].map(c=>c.value);
+      const list = exercisesByDay[dayId]||[];
+      const maxOrder = list.reduce((m,e)=>Math.max(m,e.sort_order),0);
+      await sb.from("exercises").insert({
+        user_id: user.id, day_id: dayId, name,
+        target: dayEl.querySelector(".ne-target").value.trim(),
+        cue: dayEl.querySelector(".ne-cue").value.trim(),
+        default_sets: Number(dayEl.querySelector(".ne-sets").value)||3,
+        fields: fields.length?fields:['reps'],
+        sort_order: maxOrder+1
+      });
+      await loadStructure(); renderManage();
+    };
+  });
+}
+$("nd-save").onclick = async () => {
+  const label = $("nd-label").value.trim(); if(!label) return;
+  const maxOrder = days.reduce((m,d)=>Math.max(m,d.sort_order),0);
+  await sb.from("days").insert({ user_id:user.id, label, focus:$("nd-focus").value.trim(), sort_order:maxOrder+1 });
+  $("nd-label").value=""; $("nd-focus").value=""; $("addDayBox").open=false;
+  await loadStructure(); renderManage();
+};
+
+/* ---------------- boot ---------------- */
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if(data.session){ await enter(data.session.user); await flushQueue(); await loadLogs(); if(view==="workout") renderWorkout(); if(view==="history") renderHistory(); }
+})();
+</script>
+</body>
+</html>
